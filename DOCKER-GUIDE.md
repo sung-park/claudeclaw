@@ -159,9 +159,14 @@ scp -i <key> ~/.config/google-calendar-mcp/tokens.json \
 
 ### 5. MCP 서버 등록
 
+> **중요:** 반드시 `--scope project`를 사용할 것.
+> 기본값은 `~/.claude.json`에 저장되는데, 이 파일은 볼륨 마운트 밖이라 컨테이너 재시작 시 사라짐.
+> `--scope project`로 등록하면 `/workspace/.claude/settings.json`에 저장되어 유지됨.
+
 ```bash
 docker exec -it claw-<name> claude mcp add google-calendar --transport stdio \
   -e GOOGLE_OAUTH_CREDENTIALS=/workspace/credentials.json \
+  --scope project \
   -- npx -y @cocal/google-calendar-mcp
 ```
 
@@ -176,6 +181,43 @@ docker exec -it claw-<name> claude mcp list
 
 > **참고:** `claw.sh`는 `data/<name>/home-config`를 `/home/claw/.config`에 마운트하므로
 > 토큰이 컨테이너 재생성 시에도 유지됨.
+
+---
+
+## Google Tasks MCP 연결
+
+Google Tasks를 `@alvincrave/gtasks-mcp` 패키지로 연동하는 방법.
+같은 Google Cloud 프로젝트의 credentials.json을 사용한다.
+
+### 1. Google Tasks API 활성화
+
+- [Google Cloud Console](https://console.cloud.google.com/) → API 라이브러리 → **Google Tasks API** → 사용
+
+### 2. MCP 서버 등록
+
+credentials.json의 `client_id`와 `client_secret`을 환경변수로 전달한다.
+
+```bash
+docker exec -it claw-<name> claude mcp add google-tasks --transport stdio \
+  -e GOOGLE_CLIENT_ID=<client_id> \
+  -e GOOGLE_CLIENT_SECRET=<client_secret> \
+  --scope project \
+  -- npx -y @alvincrave/gtasks-mcp
+```
+
+> `client_id`와 `client_secret`은 credentials.json에서 확인:
+> ```bash
+> cat data/<name>/workspace/credentials.json
+> ```
+
+### 3. 확인 및 재시작
+
+```bash
+docker exec -it claw-<name> claude mcp list
+# google-tasks가 ✓ Connected 인지 확인
+
+./claw.sh restart <name>
+```
 
 ---
 
