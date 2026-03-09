@@ -4,7 +4,15 @@ set -e
 echo "=== ClaudeClaw Docker ==="
 
 # Wait until Claude is authenticated
-while ! claude --version > /dev/null 2>&1 || ! claude -p "ping" --output-format text > /dev/null 2>&1; do
+# Check by looking for credential files in ~/.claude/
+while true; do
+  if claude auth status 2>/dev/null | grep -qi "logged in"; then
+    break
+  fi
+  # Fallback: check if credential files exist
+  if [ -f "$HOME/.claude/.credentials.json" ] || [ -f "$HOME/.claude/credentials.json" ]; then
+    break
+  fi
   echo ""
   echo "Claude Code is not logged in."
   echo "Run this from another terminal:"
