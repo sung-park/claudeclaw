@@ -63,7 +63,7 @@ cmd_add() {
   docker run -d \
     --name "$cname" \
     --restart unless-stopped \
-    -v "$(pwd)/${DATA_DIR}/${name}/home-claude:/root/.claude" \
+    -v "$(pwd)/${DATA_DIR}/${name}/home-claude:/home/claw/.claude" \
     -v "$(pwd)/${DATA_DIR}/${name}/workspace:/workspace" \
     "$IMAGE_NAME"
 

@@ -11,6 +11,10 @@ RUN apt-get update && \
 # Install Claude Code CLI
 RUN npm install -g @anthropic-ai/claude-code
 
+# Create non-root user (Claude Code blocks --dangerously-skip-permissions as root)
+RUN useradd -m -s /bin/bash claw
+RUN mkdir -p /workspace && chown claw:claw /workspace
+
 # Copy app source
 WORKDIR /app
 COPY package.json bun.lock ./
@@ -23,6 +27,9 @@ COPY hooks ./hooks
 COPY skills ./skills
 COPY docker-entrypoint.sh ./
 RUN chmod +x docker-entrypoint.sh
+
+# Switch to non-root user
+USER claw
 
 # Workspace = process.cwd() for ClaudeClaw state
 WORKDIR /workspace

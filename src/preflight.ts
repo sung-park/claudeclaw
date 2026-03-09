@@ -107,6 +107,17 @@ function copyDirSync(src: string, dest: string): void {
   }
 }
 
+/** Move a directory, falling back to copy+delete when rename fails (EXDEV). */
+function moveDir(src: string, dest: string): void {
+  try {
+    renameSync(src, dest);
+  } catch (err: any) {
+    if (err.code !== "EXDEV") throw err;
+    copyDirSync(src, dest);
+    rmSync(src, { recursive: true, force: true });
+  }
+}
+
 function detectPkgManager(): string | null {
   try { run("bun --version"); return "bun"; } catch {}
   try { run("npm --version"); return "npm"; } catch {}
@@ -200,7 +211,7 @@ function installRepoPlugin(
     if (existsSync(marketplaceDir)) {
       rmSync(marketplaceDir, { recursive: true, force: true });
     }
-    renameSync(tempDir, marketplaceDir);
+    moveDir(tempDir, marketplaceDir);
     tempDir = null;
 
     const fullSha = run("git rev-parse HEAD", { cwd: marketplaceDir });
@@ -316,7 +327,7 @@ function installOfficialPlugins(
     if (existsSync(marketplaceDir)) {
       rmSync(marketplaceDir, { recursive: true, force: true });
     }
-    renameSync(tempDir, marketplaceDir);
+    moveDir(tempDir, marketplaceDir);
     tempDir = null;
 
     const now = new Date().toISOString().replace(/\.\d{3}Z$/, ".000Z");
