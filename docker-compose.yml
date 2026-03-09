@@ -1,0 +1,16 @@
+services:
+  claw-sung:
+    build: .
+    container_name: claw-sung
+    restart: unless-stopped
+    volumes:
+      - ./data/sung/home-claude:/root/.claude
+      - ./data/sung/workspace:/workspace
+
+  claw-family:
+    build: .
+    container_name: claw-family
+    restart: unless-stopped
+    volumes:
+      - ./data/family/home-claude:/root/.claude
+      - ./data/family/workspace:/workspace
