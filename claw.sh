@@ -39,7 +39,7 @@ cmd_rebuild() {
   docker build -t "$IMAGE_NAME" .
   # Restart all running claw containers
   for cid in $(docker ps -q --filter "name=^${CONTAINER_PREFIX}-"); do
-    local name=$(docker inspect --format '{{.Name}}' "$cid" | sed 's/^\//')
+    local name=$(docker inspect --format '{{.Name}}' "$cid" | sed 's|^/||')
     echo "Restarting $name..."
     docker stop "$name" && docker rm "$name"
     local user="${name#${CONTAINER_PREFIX}-}"
