@@ -193,15 +193,47 @@ Google Tasks를 `@alvincrave/gtasks-mcp` 패키지로 연동하는 방법.
 
 - [Google Cloud Console](https://console.cloud.google.com/) → API 라이브러리 → **Google Tasks API** → 사용
 
-### 2. MCP 서버 등록
+### 2. Refresh Token 획득 (로컬 PC에서)
 
-credentials.json의 `client_id`와 `client_secret`을 환경변수로 전달한다.
+`@alvincrave/gtasks-mcp`는 refresh token이 필요하다. 로컬에서 OAuth flow를 실행하여 획득한다.
+
+```bash
+# credentials.json에서 client_id, client_secret 확인 후 아래 스크립트 저장
+cat > /tmp/get-token.js << 'EOF'
+const http = require('http');
+const https = require('https');
+const url = require('url');
+const clientId = '<client_id>';
+const clientSecret = '<client_secret>';
+const redirect = 'http://localhost:3501/callback';
+const scope = 'https://www.googleapis.com/auth/tasks';
+const authUrl = 'https://accounts.google.com/o/oauth2/v2/auth?client_id='+clientId+'&redirect_uri='+encodeURIComponent(redirect)+'&response_type=code&scope='+encodeURIComponent(scope)+'&access_type=offline&prompt=consent';
+console.log('Open this URL:\n'+authUrl);
+const srv = http.createServer((req, res) => {
+  const q = url.parse(req.url, true).query;
+  if (!q.code) { res.end('No code'); return; }
+  const body = 'code='+q.code+'&client_id='+clientId+'&client_secret='+clientSecret+'&redirect_uri='+encodeURIComponent(redirect)+'&grant_type=authorization_code';
+  const r = https.request({hostname:'oauth2.googleapis.com',path:'/token',method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'}}, (resp) => {
+    let d=''; resp.on('data',c=>d+=c); resp.on('end',()=>{ console.log('\nToken response:\n'+d); res.end('Done! Check terminal.'); srv.close(); });
+  });
+  r.write(body); r.end();
+});
+srv.listen(3501, () => console.log('\nWaiting for callback on port 3501...'));
+EOF
+node /tmp/get-token.js
+```
+
+> Google Cloud Console의 OAuth 리다이렉트 URI에 `http://localhost:3501/callback`을 추가해야 할 수 있음.
+
+브라우저에서 URL을 열고 Google 계정으로 로그인. 터미널에 `refresh_token`이 출력된다.
+
+### 3. MCP 서버 등록
 
 ```bash
 docker exec -it claw-<name> claude mcp add google-tasks --transport stdio \
   -e GOOGLE_CLIENT_ID=<client_id> \
   -e GOOGLE_CLIENT_SECRET=<client_secret> \
-  --scope project \
+  -e 'GOOGLE_REFRESH_TOKEN=<refresh_token>' \
   -- npx -y @alvincrave/gtasks-mcp
 ```
 
@@ -210,7 +242,7 @@ docker exec -it claw-<name> claude mcp add google-tasks --transport stdio \
 > cat data/<name>/workspace/credentials.json
 > ```
 
-### 3. 확인 및 재시작
+### 4. 확인 및 재시작
 
 ```bash
 docker exec -it claw-<name> claude mcp list
@@ -218,6 +250,8 @@ docker exec -it claw-<name> claude mcp list
 
 ./claw.sh restart <name>
 ```
+
+> **주의:** 텔레그램에서 `/reset`을 보내 세션을 초기화한 후 테스트할 것.
 
 ---
 
