@@ -21,7 +21,7 @@ import { fileURLToPath } from "url";
 // ── Plugin repos to install (one plugin per repo) ───────────────────
 const PLUGINS = [
   "https://github.com/SawyerHood/dev-browser",
-  // "https://github.com/thedotmack/claude-mem",  // requires make/build-essential
+  "https://github.com/thedotmack/claude-mem",
   "https://github.com/obra/superpowers-marketplace",
   // Add more repos here:
   // "https://github.com/user/repo",

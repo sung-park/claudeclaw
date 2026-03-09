@@ -3,7 +3,7 @@ FROM oven/bun:1
 # Install Node.js (required by Claude Code CLI) and essential tools
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-      curl ca-certificates git unzip && \
+      curl ca-certificates git unzip build-essential && \
     curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
     apt-get install -y --no-install-recommends nodejs && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
