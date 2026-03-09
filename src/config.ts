@@ -15,8 +15,8 @@ const DEFAULT_SETTINGS: Settings = {
     model: "",
     api: "",
   },
-  timezone: "UTC",
-  timezoneOffsetMinutes: 0,
+  timezone: "Asia/Seoul",
+  timezoneOffsetMinutes: 540,
   heartbeat: {
     enabled: false,
     interval: 15,
