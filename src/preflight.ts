@@ -107,13 +107,27 @@ function copyDirSync(src: string, dest: string): void {
   }
 }
 
+/** Copy a directory including .git (needed for moveDir fallback). */
+function copyDirFullSync(src: string, dest: string): void {
+  mkdirSync(dest, { recursive: true });
+  for (const entry of readdirSync(src, { withFileTypes: true }) as Dirent[]) {
+    const srcPath = join(src, entry.name);
+    const destPath = join(dest, entry.name);
+    if (entry.isDirectory()) {
+      copyDirFullSync(srcPath, destPath);
+    } else {
+      copyFileSync(srcPath, destPath);
+    }
+  }
+}
+
 /** Move a directory, falling back to copy+delete when rename fails (EXDEV). */
 function moveDir(src: string, dest: string): void {
   try {
     renameSync(src, dest);
   } catch (err: any) {
     if (err.code !== "EXDEV") throw err;
-    copyDirSync(src, dest);
+    copyDirFullSync(src, dest);
     rmSync(src, { recursive: true, force: true });
   }
 }
