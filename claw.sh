@@ -61,9 +61,9 @@ cmd_add() {
   mkdir -p "${DATA_DIR}/${name}/home-claude" "${DATA_DIR}/${name}/workspace"
   # Match UID of 'claw' user inside container (1000)
   if [ "$(id -u)" -eq 0 ]; then
-    chown -R 1000:1000 "${DATA_DIR}/${name}"
+    chown -R 1001:1001 "${DATA_DIR}/${name}"
   else
-    sudo chown -R 1000:1000 "${DATA_DIR}/${name}"
+    sudo chown -R 1001:1001 "${DATA_DIR}/${name}"
   fi
 
   docker run -d \
