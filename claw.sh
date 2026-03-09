@@ -59,6 +59,8 @@ cmd_add() {
 
   ensure_image
   mkdir -p "${DATA_DIR}/${name}/home-claude" "${DATA_DIR}/${name}/workspace"
+  # Match UID of 'claw' user inside container (1000)
+  chown -R 1000:1000 "${DATA_DIR}/${name}" 2>/dev/null || true
 
   docker run -d \
     --name "$cname" \
