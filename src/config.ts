@@ -22,7 +22,7 @@ const DEFAULT_SETTINGS: Settings = {
     interval: 15,
     prompt: "",
     excludeWindows: [],
-    forwardToTelegram: true,
+    forwardToTelegram: false,
   },
   telegram: { token: "", allowedUserIds: [] },
   discord: { token: "", allowedUserIds: [] },
