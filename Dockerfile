@@ -21,9 +21,11 @@ COPY prompts ./prompts
 COPY commands ./commands
 COPY hooks ./hooks
 COPY skills ./skills
+COPY docker-entrypoint.sh ./
+RUN chmod +x docker-entrypoint.sh
 
 # Workspace = process.cwd() for ClaudeClaw state
 WORKDIR /workspace
 
-ENTRYPOINT ["bun", "run", "/app/src/index.ts"]
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["start", "--telegram", "--trigger", "--replace-existing"]
