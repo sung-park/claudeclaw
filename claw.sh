@@ -58,8 +58,8 @@ cmd_add() {
   fi
 
   ensure_image
-  mkdir -p "${DATA_DIR}/${name}/home-claude" "${DATA_DIR}/${name}/workspace"
-  # Match UID of 'claw' user inside container (1000)
+  mkdir -p "${DATA_DIR}/${name}/home-claude" "${DATA_DIR}/${name}/workspace" "${DATA_DIR}/${name}/home-config"
+  # Match UID of 'claw' user inside container (1001)
   if [ "$(id -u)" -eq 0 ]; then
     chown -R 1001:1001 "${DATA_DIR}/${name}"
   else
@@ -70,6 +70,7 @@ cmd_add() {
     --name "$cname" \
     --restart unless-stopped \
     -v "$(pwd)/${DATA_DIR}/${name}/home-claude:/home/claw/.claude" \
+    -v "$(pwd)/${DATA_DIR}/${name}/home-config:/home/claw/.config" \
     -v "$(pwd)/${DATA_DIR}/${name}/workspace:/workspace" \
     "$IMAGE_NAME"
 

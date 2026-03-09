@@ -15,7 +15,8 @@ claudeclaw/
 ├── docker-entrypoint.sh
 ├── data/
 │   ├── <name>/
-│   │   ├── home-claude/    ← Claude 인증 credential
+│   │   ├── home-claude/    ← Claude 인증 credential (~/.claude)
+│   │   ├── home-config/    ← MCP 토큰 등 (~/.config)
 │   │   └── workspace/      ← ClaudeClaw 상태 (settings, jobs, logs)
 │   └── ...
 ```
@@ -114,54 +115,67 @@ vi data/mom/workspace/.claude/claudeclaw/settings.json  # 텔레그램 설정
 
 ## Google Calendar MCP 연결
 
-Google Calendar의 credentials.json을 받아서 MCP 서버로 등록하는 방법.
+Google Calendar를 `@cocal/google-calendar-mcp` 패키지로 연동하는 방법.
 
 ### 1. Google Cloud Console에서 credentials.json 발급
 
 - [Google Cloud Console](https://console.cloud.google.com/) → API 및 서비스 → 사용자 인증 정보
+- Google Calendar API 활성화 (API 라이브러리에서 검색)
+- OAuth 동의 화면 설정 (외부/테스트 사용자로 본인 이메일 추가)
 - OAuth 2.0 클라이언트 ID 생성 → 데스크톱 앱 유형 선택
 - JSON 다운로드 → `credentials.json`
 
 ### 2. credentials.json을 볼륨에 배치
 
 ```bash
-cp credentials.json data/<name>/workspace/credentials.json
+scp -i <key> credentials.json <서버>:~/claudeclaw/data/<name>/workspace/credentials.json
 ```
 
-### 3. MCP 서버 등록
+### 3. 로컬에서 OAuth 인증 (서버가 아닌 본인 PC에서)
+
+서버에서는 localhost 리다이렉트가 불가하므로 로컬에서 인증 후 토큰을 복사한다.
 
 ```bash
-docker exec -it claw-<name> claude mcp add --transport stdio google-calendar \
-  -- npx -y @anthropic-ai/google-calendar-mcp --credentials-path /workspace/credentials.json
+# 로컬에서 실행
+GOOGLE_OAUTH_CREDENTIALS=./credentials.json npx -y @cocal/google-calendar-mcp auth
 ```
 
-### 4. 직접 JSON으로 설정하는 방법
+브라우저가 열리면 Google 계정으로 로그인하고 권한 허용.
+"Account connected!" 메시지가 나오면 성공.
 
-`claude mcp add` 대신 설정 파일을 직접 편집할 수도 있음.
+### 4. 토큰 파일을 서버로 복사
 
 ```bash
-vi data/<name>/home-claude/.claude.json
+# 토큰 위치 확인
+ls ~/.config/google-calendar-mcp/tokens.json
+
+# 서버에 디렉토리 생성 (서버에서)
+mkdir -p data/<name>/home-config/google-calendar-mcp
+
+# 로컬에서 서버로 복사
+scp -i <key> ~/.config/google-calendar-mcp/tokens.json \
+  <서버>:~/claudeclaw/data/<name>/home-config/google-calendar-mcp/
 ```
 
-```json
-{
-  "mcpServers": {
-    "google-calendar": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@anthropic-ai/google-calendar-mcp", "--credentials-path", "/workspace/credentials.json"]
-    }
-  }
-}
+### 5. MCP 서버 등록
+
+```bash
+docker exec -it claw-<name> claude mcp add google-calendar --transport stdio \
+  -e GOOGLE_OAUTH_CREDENTIALS=/workspace/credentials.json \
+  -- npx -y @cocal/google-calendar-mcp
 ```
 
-### 5. 확인
+### 6. 확인 및 재시작
 
 ```bash
 docker exec -it claw-<name> claude mcp list
+# google-calendar가 ✓ Connected 인지 확인
+
+./claw.sh restart <name>
 ```
 
-> 첫 실행 시 OAuth 동의 화면이 나올 수 있음. `docker exec -it`으로 접속하여 URL 복사 후 브라우저에서 인증.
+> **참고:** `claw.sh`는 `data/<name>/home-config`를 `/home/claw/.config`에 마운트하므로
+> 토큰이 컨테이너 재생성 시에도 유지됨.
 
 ---
 
